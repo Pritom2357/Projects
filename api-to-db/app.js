@@ -1,19 +1,29 @@
-// server.js
 import express from 'express';
 import fetch from 'node-fetch';
+import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
+
+
+const apiKey = process.env.VITE_API_KEY;
+
+if(!apiKey){
+    console.error("API key not found in environment variables.");
+    process.exit(1);    
+}
 
 const app = express();
 const PORT = 3000;
 
-// Serve static files from 'public' directory
-app.use(express.static('public'));
+app.use(cors({
+    origin: 'http://localhost:5173'
+}));
 
-// Endpoint to fetch data from the API
 app.get('/api/data', async (req, res) => {
     try {
-        const apiResponse = await fetch('https://r.applovin.com/maxReport?api_key=U_6ufDXDPxfXT5mJr1TXCfBDawPb6mmr3W01UHfLA6tC5gS_R-aTMng9oG4vXLk7wDJL8H_UKPGL3QtereTazI&start=2024-11-01&end=2024-11-28&columns=day,application,impressions,network,package_name,country,attempts,responses,fill_rate,estimated_revenue,ecpm&sort_day=ASC&format=json');
+        const apiResponse = await fetch(`https://r.applovin.com/maxReport?api_key=${apiKey}&start=2024-11-10&end=2024-12-04&columns=day,application,impressions,network,package_name,country,attempts,responses,fill_rate,estimated_revenue,ecpm&sort_day=DESC&format=json`);
         const data = await apiResponse.json();
-        res.json(data); // Send the data to the client
+        res.json(data);
     } catch (error) {
         console.error('Error fetching data from API:', error);
         res.status(500).json({ error: 'Error fetching data from API' });
