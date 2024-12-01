@@ -15,7 +15,7 @@ if(!apiKey){
 const app = express();
 const PORT = 3000;
 
-const allowOrigins = ['http://localhost:5173', 'https://data2-pritom-biswas-projects.vercel.app'];
+const allowOrigins = ['http://localhost:5173', 'https://data2-git-main-pritom-biswas-projects.vercel.app'];
 
 app.use(cors({
     origin: (origin, callback)=>{
