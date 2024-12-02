@@ -1,14 +1,14 @@
-// DataDisplay.jsx
-
 import React, { useEffect, useState } from 'react';
 import { openDB } from 'idb';
+import axios from 'axios';
 
-const DataDisplay = () => {
-  const [data, setData] = useState([]); // All data
+const DataDisplayMintegral = () => {
+  const [applovinData, setApplovinData] = useState([]);
+  const [mintegralData, setMintegralData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1); // Current page number
   const [itemsPerPage] = useState(100); // Number of items per page
-  const [dataSource, setDataSource] = useState('applovin');
+  const [dataSource, setDataSource] = useState('applovin'); // 'applovin' or 'mintegral'
 
   // Initialize IndexedDB
   const initDB = async () => {
@@ -22,74 +22,89 @@ const DataDisplay = () => {
     return db;
   };
 
-  // Function to fetch data and store in IndexedDB
-  const fetchDataAndStore = async () => {
+  // Function to fetch Applovin data
+  const fetchApplovinData = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/data');
+      const response = await fetch('http://localhost:3000/api/applovin');
       const jsonData = await response.json();
       const results = jsonData.results;
 
       // Store data in IndexedDB
       const db = await initDB();
-      await db.put('apiData', results, 'data');
+      await db.put('apiData', results, 'applovinData');
       await db.put('apiData', new Date().getTime(), 'timestamp');
 
       // Update state
-      setData(results);
+      setApplovinData(results);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching Applovin data:', error);
       setLoading(false);
     }
   };
 
+  // Function to fetch Mintegral data
+  const fetchMintegralData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/mintegral");
+      const data = response.data.data.lists;
+
+      setMintegralData(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching Mintegral data:', error);
+      setLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
   useEffect(() => {
     const getDataFromDB = async () => {
-      // Check if data exists in IndexedDB and is not expired
       const db = await initDB();
-      const storedData = await db.get('apiData', 'data');
+      const storedApplovinData = await db.get('apiData', 'applovinData');
       const timestamp = await db.get('apiData', 'timestamp');
 
       const now = new Date().getTime();
       const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
 
-      if (storedData && timestamp && now - timestamp < expiryTime) {
-        // Use stored data
-        setData(storedData);
+      if (storedApplovinData && timestamp && now - timestamp < expiryTime) {
+        // Use stored Applovin data
+        setApplovinData(storedApplovinData);
         setLoading(false);
       } else {
-        // Fetch new data
-        fetchDataAndStore();
+        // Fetch new Applovin data
+        fetchApplovinData();
       }
     };
 
     getDataFromDB();
+    fetchMintegralData(); // Mintegral data is fetched on mount as well
   }, []);
 
   // Function to refresh data
   const refreshData = () => {
     const clearDB = async () => {
       const db = await initDB();
-      await db.delete('apiData', 'data');
+      await db.delete('apiData', 'applovinData');
       await db.delete('apiData', 'timestamp');
 
-      // Fetch new data
+      // Fetch new Applovin data
       setLoading(true);
-      fetchDataAndStore();
+      fetchApplovinData();
     };
 
     clearDB();
   };
 
-  // Get total pages
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  // Get total pages for pagination
+  const totalPages = Math.ceil((dataSource === 'applovin' ? applovinData : mintegralData).length / itemsPerPage);
 
   // Get current data for the current page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
+  const currentData = (dataSource === 'applovin' ? applovinData : mintegralData).slice(indexOfFirstItem, indexOfLastItem);
 
-  // Change page
+  // Change page function
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
@@ -98,7 +113,7 @@ const DataDisplay = () => {
   // Generate page numbers for pagination controls
   const generatePageNumbers = () => {
     const pageNumbers = [];
-    const maxPageNumbersToShow = 5; // Adjust this number to show more or fewer page buttons
+    const maxPageNumbersToShow = 5;
     let startPage = Math.max(
       1,
       currentPage - Math.floor(maxPageNumbersToShow / 2)
@@ -117,6 +132,19 @@ const DataDisplay = () => {
     return pageNumbers;
   };
 
+  // Format date (if available)
+  const formatDate = (dateString) => {
+    const dateStr = String(dateString);
+    if (dateStr.length === 8) {
+      const year = dateStr.slice(0, 4);
+      const month = dateStr.slice(4, 6);
+      const day = dateStr.slice(6, 8);
+      return `${day}/${month}/${year}`;
+    } else {
+      return "Invalid Date";
+    }
+  };
+
   if (loading) {
     return <div className="text-center mt-10">Loading...</div>;
   }
@@ -124,12 +152,30 @@ const DataDisplay = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Data from API</h1>
+      
+      {/* Data Source Switch */}
+      <div className="mb-4">
+        <button
+          onClick={() => setDataSource('applovin')}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600"
+        >
+          Show Applovin Data
+        </button>
+        <button
+          onClick={() => setDataSource('mintegral')}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 hover:bg-blue-600"
+        >
+          Show Mintegral Data
+        </button>
+      </div>
+
       <button
         onClick={refreshData}
         className="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600"
       >
         Refresh Data
       </button>
+
       {currentData && currentData.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white">
@@ -152,6 +198,7 @@ const DataDisplay = () => {
                     <td
                       key={key}
                       className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
+                      style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                     >
                       {key === 'day'
                         ? new Date(item[key]).toLocaleDateString()
@@ -169,29 +216,19 @@ const DataDisplay = () => {
 
       {/* Pagination Controls */}
       <div className="flex justify-center mt-6">
-        {/* Previous Button */}
         <button
           onClick={() => paginate(currentPage - 1)}
-          className={`px-4 py-2 mx-1 border rounded ${
-            currentPage === 1
-              ? 'opacity-50 cursor-not-allowed'
-              : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'
-          }`}
+          className={`px-4 py-2 mx-1 border rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
           disabled={currentPage === 1}
         >
           Previous
         </button>
 
-        {/* First Page */}
         {currentPage > 3 && (
           <>
             <button
               onClick={() => paginate(1)}
-              className={`px-4 py-2 mx-1 border rounded ${
-                currentPage === 1
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'
-              }`}
+              className={`px-4 py-2 mx-1 border rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
             >
               1
             </button>
@@ -199,46 +236,31 @@ const DataDisplay = () => {
           </>
         )}
 
-        {/* Page Numbers */}
         {generatePageNumbers().map((number) => (
           <button
             key={number}
             onClick={() => paginate(number)}
-            className={`px-4 py-2 mx-1 border rounded ${
-              currentPage === number
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'
-            }`}
+            className={`px-4 py-2 mx-1 border rounded ${currentPage === number ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
           >
             {number}
           </button>
         ))}
 
-        {/* Last Page */}
         {currentPage < totalPages - 2 && (
           <>
             {currentPage < totalPages - 3 && <span className="px-2">...</span>}
             <button
               onClick={() => paginate(totalPages)}
-              className={`px-4 py-2 mx-1 border rounded ${
-                currentPage === totalPages
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'
-              }`}
+              className={`px-4 py-2 mx-1 border rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
             >
               {totalPages}
             </button>
           </>
         )}
 
-        {/* Next Button */}
         <button
           onClick={() => paginate(currentPage + 1)}
-          className={`px-4 py-2 mx-1 border rounded ${
-            currentPage === totalPages
-              ? 'opacity-50 cursor-not-allowed'
-              : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'
-          }`}
+          className={`px-4 py-2 mx-1 border rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
           disabled={currentPage === totalPages}
         >
           Next
@@ -248,4 +270,4 @@ const DataDisplay = () => {
   );
 };
 
-export default DataDisplay;
+export default DataDisplayMintegral;
