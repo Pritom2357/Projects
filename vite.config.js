@@ -6,7 +6,11 @@ import react from '@vitejs/plugin-react'
 export default {
   server: {
     proxy: {
-      '/api': 'http://localhost:5000',    
+      '/api': {
+        target: 'https://r.applovin.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 };
