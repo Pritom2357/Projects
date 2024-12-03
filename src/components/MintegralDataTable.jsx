@@ -10,8 +10,8 @@ const MintegralDataTable = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get("http://localhost:3000/api/mintegral");
-        setData(response.data.data.lists);  // Access the 'lists' array inside 'data'
-        console.log(response.data.data.lists);  // Log the correct data to verify
+        setData(response.data.data.lists); 
+        console.log(response.data.data.lists); 
         
         setLoading(false);
       } catch (error) {
@@ -26,28 +26,22 @@ const MintegralDataTable = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
-  // If data is an empty array or object, return a message
   if (!data.length) return <div>No data available</div>;
 
-  // Function to format date from yyyyMMdd to MM/DD/YYYY
   const formatDate = (dateString) => {
-    const dateStr = String(dateString); // Convert dateString to a string
+    const dateStr = String(dateString); 
 
-    // Ensure the string is exactly 8 characters long (yyyyMMdd format)
     if (dateStr.length === 8) {
       const year = dateStr.slice(0, 4);
       const month = dateStr.slice(4, 6);
       const day = dateStr.slice(6, 8);
 
-    //   const formattedDate = new Date(`${year}-${month}-${day}`);
-    //   return formattedDate.toLocaleDateString(); // Format to MM/DD/YYYY
     return `${day.trim()}/${month}/${year}`;
     } else {
-      return "Invalid Date"; // Return a fallback message if the date format is invalid
+      return "Invalid Date"; 
     }
   };
 
-  // Get headers dynamically from the first item in the array (assumes all rows have the same structure)
   const headers = Object.keys(data[0]);
 
   return (

@@ -6,11 +6,10 @@ const DataDisplayMintegral = () => {
   const [applovinData, setApplovinData] = useState([]);
   const [mintegralData, setMintegralData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const [itemsPerPage] = useState(100); // Number of items per page
-  const [dataSource, setDataSource] = useState('applovin'); // 'applovin' or 'mintegral'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(100);
+  const [dataSource, setDataSource] = useState('applovin');
 
-  // Initialize IndexedDB
   const initDB = async () => {
     const db = await openDB('MyDatabase', 1, {
       upgrade(db) {
@@ -22,19 +21,16 @@ const DataDisplayMintegral = () => {
     return db;
   };
 
-  // Function to fetch Applovin data
   const fetchApplovinData = async () => {
     try {
       const response = await fetch('https://backend-five-kohl-26.vercel.app/api/applovin');
       const jsonData = await response.json();
       const results = jsonData.results;
 
-      // Store data in IndexedDB
       const db = await initDB();
       await db.put('apiData', results, 'applovinData');
       await db.put('apiData', new Date().getTime(), 'timestamp');
 
-      // Update state
       setApplovinData(results);
       setLoading(false);
     } catch (error) {
@@ -43,7 +39,6 @@ const DataDisplayMintegral = () => {
     }
   };
 
-  // Function to fetch Mintegral data
   const fetchMintegralData = async () => {
     try {
       const response = await axios.get("https://backend-five-kohl-26.vercel.app/api/mintegral");
@@ -57,7 +52,6 @@ const DataDisplayMintegral = () => {
     }
   };
 
-  // Fetch data on component mount
   useEffect(() => {
     const getDataFromDB = async () => {
       const db = await initDB();
@@ -68,27 +62,23 @@ const DataDisplayMintegral = () => {
       const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
 
       if (storedApplovinData && timestamp && now - timestamp < expiryTime) {
-        // Use stored Applovin data
         setApplovinData(storedApplovinData);
         setLoading(false);
       } else {
-        // Fetch new Applovin data
         fetchApplovinData();
       }
     };
 
     getDataFromDB();
-    fetchMintegralData(); // Mintegral data is fetched on mount as well
+    fetchMintegralData();
   }, []);
 
-  // Function to refresh data
   const refreshData = () => {
     const clearDB = async () => {
       const db = await initDB();
       await db.delete('apiData', 'applovinData');
       await db.delete('apiData', 'timestamp');
 
-      // Fetch new Applovin data
       setLoading(true);
       fetchApplovinData();
     };
@@ -96,21 +86,17 @@ const DataDisplayMintegral = () => {
     clearDB();
   };
 
-  // Get total pages for pagination
   const totalPages = Math.ceil((dataSource === 'applovin' ? applovinData : mintegralData).length / itemsPerPage);
 
-  // Get current data for the current page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = (dataSource === 'applovin' ? applovinData : mintegralData).slice(indexOfFirstItem, indexOfLastItem);
 
-  // Change page function
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
   };
 
-  // Generate page numbers for pagination controls
   const generatePageNumbers = () => {
     const pageNumbers = [];
     const maxPageNumbersToShow = 5;
@@ -132,14 +118,13 @@ const DataDisplayMintegral = () => {
     return pageNumbers;
   };
 
-  // Format date (if available)
   const formatDate = (dateString) => {
     const dateStr = String(dateString);
     if (dateStr.length === 8) {
       const year = dateStr.slice(0, 4);
       const month = dateStr.slice(4, 6);
       const day = dateStr.slice(6, 8);
-      return `${day}-${month}-${year.slice(-2)}`; // Format as dd-mm-yy
+      return `${day}-${month}-${year.slice(-2)}`;
     } else {
       return "Invalid Date";
     }

@@ -6,7 +6,7 @@ const AppLovinDataFetcher = () => {
   const [error, setError] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50; // Limit to 100 entries per page
+  const itemsPerPage = 50; 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,7 +16,7 @@ const AppLovinDataFetcher = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const result = await response.json();
-        setData(result.results || []); // Ensure data is an array
+        setData(result.results || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -27,17 +27,13 @@ const AppLovinDataFetcher = () => {
     fetchData();
   }, []);
 
-  // Calculate the indexes for slicing the data
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
-  // Slice the data for current page
   const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Calculate total pages
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
-  // Handler functions
   const goToNextPage = () => {
     setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
   };

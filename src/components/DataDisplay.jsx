@@ -4,13 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { openDB } from 'idb';
 
 const DataDisplay = () => {
-  const [data, setData] = useState([]); // All data
+  const [data, setData] = useState([]); 
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const [itemsPerPage] = useState(100); // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1); 
+  const [itemsPerPage] = useState(100); 
   const [dataSource, setDataSource] = useState('applovin');
 
-  // Initialize IndexedDB
   const initDB = async () => {
     const db = await openDB('MyDatabase', 1, {
       upgrade(db) {
@@ -22,19 +21,16 @@ const DataDisplay = () => {
     return db;
   };
 
-  // Function to fetch data and store in IndexedDB
   const fetchDataAndStore = async () => {
     try {
       const response = await fetch('http://localhost:3000/api/data');
       const jsonData = await response.json();
       const results = jsonData.results;
 
-      // Store data in IndexedDB
       const db = await initDB();
       await db.put('apiData', results, 'data');
       await db.put('apiData', new Date().getTime(), 'timestamp');
 
-      // Update state
       setData(results);
       setLoading(false);
     } catch (error) {
@@ -45,20 +41,18 @@ const DataDisplay = () => {
 
   useEffect(() => {
     const getDataFromDB = async () => {
-      // Check if data exists in IndexedDB and is not expired
+
       const db = await initDB();
       const storedData = await db.get('apiData', 'data');
       const timestamp = await db.get('apiData', 'timestamp');
 
       const now = new Date().getTime();
-      const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+      const expiryTime = 24 * 60 * 60 * 1000; 
 
       if (storedData && timestamp && now - timestamp < expiryTime) {
-        // Use stored data
         setData(storedData);
         setLoading(false);
       } else {
-        // Fetch new data
         fetchDataAndStore();
       }
     };
@@ -66,14 +60,12 @@ const DataDisplay = () => {
     getDataFromDB();
   }, []);
 
-  // Function to refresh data
   const refreshData = () => {
     const clearDB = async () => {
       const db = await initDB();
       await db.delete('apiData', 'data');
       await db.delete('apiData', 'timestamp');
 
-      // Fetch new data
       setLoading(true);
       fetchDataAndStore();
     };
@@ -81,24 +73,20 @@ const DataDisplay = () => {
     clearDB();
   };
 
-  // Get total pages
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
-  // Get current data for the current page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Change page
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
   };
 
-  // Generate page numbers for pagination controls
   const generatePageNumbers = () => {
     const pageNumbers = [];
-    const maxPageNumbersToShow = 5; // Adjust this number to show more or fewer page buttons
+    const maxPageNumbersToShow = 5; 
     let startPage = Math.max(
       1,
       currentPage - Math.floor(maxPageNumbersToShow / 2)
