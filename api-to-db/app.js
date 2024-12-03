@@ -26,7 +26,7 @@ date7DaysAgo.setDate(currentDate.getDate() - 7);
 
 // Calculate 60 days behind
 const date60DaysAgo = new Date(currentDate);
-date60DaysAgo.setDate(currentDate.getDate() - 60);
+date60DaysAgo.setDate(currentDate.getDate() - 59);
 
 const currentFormatted = getFormattedDate(currentDate);
 const date7DaysAgoFormatted = getFormattedDate(date7DaysAgo);

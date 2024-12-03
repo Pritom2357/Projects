@@ -25,7 +25,7 @@ const DataDisplayMintegral = () => {
   // Function to fetch Applovin data
   const fetchApplovinData = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/applovin');
+      const response = await fetch('https://backend-five-kohl-26.vercel.app/api/applovin');
       const jsonData = await response.json();
       const results = jsonData.results;
 
@@ -46,7 +46,7 @@ const DataDisplayMintegral = () => {
   // Function to fetch Mintegral data
   const fetchMintegralData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/mintegral");
+      const response = await axios.get("https://backend-five-kohl-26.vercel.app/api/mintegral");
       const data = response.data.data.lists;
 
       setMintegralData(data);
@@ -139,7 +139,7 @@ const DataDisplayMintegral = () => {
       const year = dateStr.slice(0, 4);
       const month = dateStr.slice(4, 6);
       const day = dateStr.slice(6, 8);
-      return `${day}/${month}/${year}`;
+      return `${day}-${month}-${year.slice(-2)}`; // Format as dd-mm-yy
     } else {
       return "Invalid Date";
     }
@@ -176,6 +176,10 @@ const DataDisplayMintegral = () => {
         Refresh Data
       </button>
 
+        <h1 className="text-3xl text-blue-700 text-center p-8">
+        {dataSource === "applovin" ? "Applovin Data" : "Mintegral Data"}
+        </h1>
+
       {currentData && currentData.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white">
@@ -192,22 +196,23 @@ const DataDisplayMintegral = () => {
               </tr>
             </thead>
             <tbody>
-              {currentData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-100">
-                  {Object.keys(item).map((key) => (
-                    <td
-                      key={key}
-                      className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
-                      style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    >
-                      {key === 'day'
-                        ? new Date(item[key]).toLocaleDateString()
-                        : item[key]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+                {currentData.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-100">
+                    {Object.keys(item).map((key) => (
+                      <td
+                        key={key}
+                        className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      >
+                        {key.toLowerCase() === 'date' && dataSource === 'mintegral'
+                          ? formatDate(String(item[key]))
+                          : item[key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+
           </table>
         </div>
       ) : (
