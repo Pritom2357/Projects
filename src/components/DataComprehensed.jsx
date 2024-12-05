@@ -1,3 +1,5 @@
+// DataDisplayMintegral.jsx
+
 import React, { useEffect, useState } from 'react';
 import { openDB } from 'idb';
 import axios from 'axios';
@@ -13,6 +15,7 @@ const DataDisplayMintegral = () => {
 
   const initDB = async () => {
     const db = await openDB('MyDatabase', 1, {
+
       upgrade(db) {
         if (!db.objectStoreNames.contains('apiData')) {
           db.createObjectStore('apiData');
@@ -42,8 +45,9 @@ const DataDisplayMintegral = () => {
 
   const fetchMintegralData = async () => {
     try {
-      const response = await axios.get("https://backend-five-kohl-26.vercel.app/api/mintegral");
-      const data = response.data.data.lists;
+      const response = await axios.get('https://backend-five-kohl-26.vercel.app/api/mintegral');
+      const data = response.data.data;
+      console.log('Mintegral data: ', data);
 
       setMintegralData(data);
       setLoading(false);
@@ -74,11 +78,6 @@ const DataDisplayMintegral = () => {
     fetchMintegralData();
   }, []);
 
-  // useEffect(()=>{
-  //   setSortConfig({key:null, direction:'ascending'});
-  //   setCurrentPage(1);
-  // }, [dataSource])
-
   const refreshData = () => {
     const clearDB = async () => {
       const db = await initDB();
@@ -102,19 +101,16 @@ const DataDisplayMintegral = () => {
         if (aValue === undefined) return 1;
         if (bValue === undefined) return -1;
 
-        // Handle different data types
         if (typeof aValue === 'number' && typeof bValue === 'number') {
           return sortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
         }
 
-        // If values are dates in string format
         if (sortConfig.key.toLowerCase() === 'date') {
-          const aDate = new Date(formatDate(aValue));
-          const bDate = new Date(formatDate(bValue));
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
           return sortConfig.direction === 'ascending' ? aDate - bDate : bDate - aDate;
         }
 
-        // Default to string comparison
         return sortConfig.direction === 'ascending'
           ? aValue.toString().localeCompare(bValue.toString())
           : bValue.toString().localeCompare(aValue.toString());
@@ -137,10 +133,7 @@ const DataDisplayMintegral = () => {
   const generatePageNumbers = () => {
     const pageNumbers = [];
     const maxPageNumbersToShow = 5;
-    let startPage = Math.max(
-      1,
-      currentPage - Math.floor(maxPageNumbersToShow / 2)
-    );
+    let startPage = Math.max(1, currentPage - Math.floor(maxPageNumbersToShow / 2));
     let endPage = startPage + maxPageNumbersToShow - 1;
 
     if (endPage > totalPages) {
@@ -155,25 +148,20 @@ const DataDisplayMintegral = () => {
     return pageNumbers;
   };
 
-  const formatDate = (dateString) => {
-    const dateStr = String(dateString);
-    if (dateStr.length === 8) {
-      const year = dateStr.slice(0, 4);
-      const month = dateStr.slice(4, 6);
-      const day = dateStr.slice(6, 8);
-      return `${month}/${day}/${year}`; // Changed to MM/DD/YYYY for Date parsing
-    } else {
-      return "Invalid Date";
-    }
-  };
-
   const requestSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
-    setCurrentPage(1); // Reset to first page on sort
+    setCurrentPage(1);
+  };
+
+  const getDisplayedColumns = (dataSource) => {
+    if (dataSource === 'mintegral') {
+      return ['date', 'spend', 'package_name', 'geo', 'platform'];
+    }
+    return Object.keys(currentData[0]);
   };
 
   if (loading) {
@@ -183,18 +171,22 @@ const DataDisplayMintegral = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Data from API</h1>
-      
+
       {/* Data Source Switch */}
       <div className="mb-4">
         <button
           onClick={() => setDataSource('applovin')}
-          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600 ${dataSource === 'applovin' ? 'opacity-75' : ''}`}
+          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600 ${
+            dataSource === 'applovin' ? 'opacity-75' : ''
+          }`}
         >
           Show Applovin Data
         </button>
         <button
           onClick={() => setDataSource('mintegral')}
-          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 hover:bg-blue-600 ${dataSource === 'mintegral' ? 'opacity-75' : ''}`}
+          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 hover:bg-blue-600 ${
+            dataSource === 'mintegral' ? 'opacity-75' : ''
+          }`}
         >
           Show Mintegral Data
         </button>
@@ -208,7 +200,7 @@ const DataDisplayMintegral = () => {
       </button>
 
       <h1 className="text-3xl text-blue-700 text-center p-8">
-        {dataSource === "applovin" ? "Applovin Data" : "Mintegral Data"}
+        {dataSource === 'applovin' ? 'Applovin Data' : 'Mintegral Data'}
       </h1>
 
       {currentData && currentData.length > 0 ? (
@@ -216,7 +208,7 @@ const DataDisplayMintegral = () => {
           <table className="min-w-full bg-white">
             <thead>
               <tr>
-                {Object.keys(currentData[0]).map((key) => (
+                {getDisplayedColumns(dataSource).map((key) => (
                   <th
                     key={key}
                     onClick={() => requestSort(key)}
@@ -236,79 +228,79 @@ const DataDisplayMintegral = () => {
             </thead>
             <tbody>
               {currentData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-100">
-                  {Object.keys(item).map((key) => (
+                <tr key={index} className="hover:bg-gray-100 overflow-visible">
+                  {getDisplayedColumns(dataSource).map((key) => (
                     <td
                       key={key}
-                      className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
-                      style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700 relative overflow-visible"
                     >
-                      {key.toLowerCase() === 'date' && dataSource === 'mintegral'
-                        ? formatDate(String(item[key]))
-                        : item[key]}
+                      {dataSource === 'mintegral' && key === 'geo' ? (
+                        item.geo && item.geo.length > 0 ? (
+                          <div className="relative group">
+                            <span className="cursor-pointer">
+                              {item.geo[0]} {item.geo.length > 1 && '...'}
+                            </span>
+                            {item.geo.length > 1 && (
+                              <div
+                                className="invisible group-hover:visible absolute left-0 z-50
+                                bg-gray-800 text-white p-2 rounded shadow-lg min-w-[150px]
+                                whitespace-normal bottom-full mb-2"
+                              >
+                                {item.geo.map((country, idx) => (
+                                  <div key={idx} className="py-1">
+                                    {country}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          'N/A'
+                        )
+                      ) : (
+                        item[key]
+                      )}
                     </td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-6">
+            {currentPage > 1 && (
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-l-md"
+                onClick={() => paginate(currentPage - 1)}
+              >
+                Prev
+              </button>
+            )}
+            {generatePageNumbers().map((number) => (
+              <button
+                key={number}
+                className={`px-4 py-2 bg-gray-200 text-gray-800 ${
+                  number === currentPage ? 'bg-blue-500 text-white' : ''
+                } rounded-md`}
+                onClick={() => paginate(number)}
+              >
+                {number}
+              </button>
+            ))}
+            {currentPage < totalPages && (
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-r-md"
+                onClick={() => paginate(currentPage + 1)}
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <p>No data available.</p>
       )}
-
-      {/* Pagination Controls */}
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={() => paginate(currentPage - 1)}
-          className={`px-4 py-2 mx-1 border rounded ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-
-        {currentPage > 3 && (
-          <>
-            <button
-              onClick={() => paginate(1)}
-              className={`px-4 py-2 mx-1 border rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
-            >
-              1
-            </button>
-            {currentPage > 4 && <span className="px-2">...</span>}
-          </>
-        )}
-
-        {generatePageNumbers().map((number) => (
-          <button
-            key={number}
-            onClick={() => paginate(number)}
-            className={`px-4 py-2 mx-1 border rounded ${currentPage === number ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
-          >
-            {number}
-          </button>
-        ))}
-
-        {currentPage < totalPages - 2 && (
-          <>
-            {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-            <button
-              onClick={() => paginate(totalPages)}
-              className={`px-4 py-2 mx-1 border rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
-            >
-              {totalPages}
-            </button>
-          </>
-        )}
-
-        <button
-          onClick={() => paginate(currentPage + 1)}
-          className={`px-4 py-2 mx-1 border rounded ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white'}`}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 };
