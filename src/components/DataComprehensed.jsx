@@ -9,6 +9,7 @@ const DataDisplayMintegral = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(100);
   const [dataSource, setDataSource] = useState('applovin');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
   const initDB = async () => {
     const db = await openDB('MyDatabase', 1, {
@@ -73,6 +74,11 @@ const DataDisplayMintegral = () => {
     fetchMintegralData();
   }, []);
 
+  // useEffect(()=>{
+  //   setSortConfig({key:null, direction:'ascending'});
+  //   setCurrentPage(1);
+  // }, [dataSource])
+
   const refreshData = () => {
     const clearDB = async () => {
       const db = await initDB();
@@ -86,11 +92,42 @@ const DataDisplayMintegral = () => {
     clearDB();
   };
 
-  const totalPages = Math.ceil((dataSource === 'applovin' ? applovinData : mintegralData).length / itemsPerPage);
+  const sortedData = React.useMemo(() => {
+    let sortableData = [...(dataSource === 'applovin' ? applovinData : mintegralData)];
+    if (sortConfig.key !== null) {
+      sortableData.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === undefined) return 1;
+        if (bValue === undefined) return -1;
+
+        // Handle different data types
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
+        }
+
+        // If values are dates in string format
+        if (sortConfig.key.toLowerCase() === 'date') {
+          const aDate = new Date(formatDate(aValue));
+          const bDate = new Date(formatDate(bValue));
+          return sortConfig.direction === 'ascending' ? aDate - bDate : bDate - aDate;
+        }
+
+        // Default to string comparison
+        return sortConfig.direction === 'ascending'
+          ? aValue.toString().localeCompare(bValue.toString())
+          : bValue.toString().localeCompare(aValue.toString());
+      });
+    }
+    return sortableData;
+  }, [applovinData, mintegralData, sortConfig, dataSource]);
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentData = (dataSource === 'applovin' ? applovinData : mintegralData).slice(indexOfFirstItem, indexOfLastItem);
+  const currentData = sortedData.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
@@ -124,10 +161,19 @@ const DataDisplayMintegral = () => {
       const year = dateStr.slice(0, 4);
       const month = dateStr.slice(4, 6);
       const day = dateStr.slice(6, 8);
-      return `${day}-${month}-${year.slice(-2)}`;
+      return `${month}/${day}/${year}`; // Changed to MM/DD/YYYY for Date parsing
     } else {
       return "Invalid Date";
     }
+  };
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page on sort
   };
 
   if (loading) {
@@ -142,13 +188,13 @@ const DataDisplayMintegral = () => {
       <div className="mb-4">
         <button
           onClick={() => setDataSource('applovin')}
-          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600"
+          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600 ${dataSource === 'applovin' ? 'opacity-75' : ''}`}
         >
           Show Applovin Data
         </button>
         <button
           onClick={() => setDataSource('mintegral')}
-          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 hover:bg-blue-600"
+          className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 hover:bg-blue-600 ${dataSource === 'mintegral' ? 'opacity-75' : ''}`}
         >
           Show Mintegral Data
         </button>
@@ -161,9 +207,9 @@ const DataDisplayMintegral = () => {
         Refresh Data
       </button>
 
-        <h1 className="text-3xl text-blue-700 text-center p-8">
+      <h1 className="text-3xl text-blue-700 text-center p-8">
         {dataSource === "applovin" ? "Applovin Data" : "Mintegral Data"}
-        </h1>
+      </h1>
 
       {currentData && currentData.length > 0 ? (
         <div className="overflow-x-auto">
@@ -173,31 +219,38 @@ const DataDisplayMintegral = () => {
                 {Object.keys(currentData[0]).map((key) => (
                   <th
                     key={key}
-                    className="py-2 px-4 border-b border-gray-200 bg-gray-100 text-left text-sm font-semibold text-gray-700"
+                    onClick={() => requestSort(key)}
+                    className="py-2 px-4 border-b border-gray-200 bg-gray-100 text-left text-sm font-semibold text-gray-700 cursor-pointer"
                   >
                     {key.charAt(0).toUpperCase() + key.slice(1)}
+                    {sortConfig.key === key ? (
+                      sortConfig.direction === 'ascending' ? (
+                        <span> ▲</span>
+                      ) : (
+                        <span> ▼</span>
+                      )
+                    ) : null}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-                {currentData.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-100">
-                    {Object.keys(item).map((key) => (
-                      <td
-                        key={key}
-                        className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
-                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                      >
-                        {key.toLowerCase() === 'date' && dataSource === 'mintegral'
-                          ? formatDate(String(item[key]))
-                          : item[key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-
+              {currentData.map((item, index) => (
+                <tr key={index} className="hover:bg-gray-100">
+                  {Object.keys(item).map((key) => (
+                    <td
+                      key={key}
+                      className="py-2 px-4 border-b border-gray-200 text-sm text-gray-700"
+                      style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    >
+                      {key.toLowerCase() === 'date' && dataSource === 'mintegral'
+                        ? formatDate(String(item[key]))
+                        : item[key]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       ) : (
