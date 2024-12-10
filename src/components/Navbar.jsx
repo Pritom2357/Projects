@@ -8,7 +8,7 @@ const Navbar = () => {
     const options = [
         {path: "/", label: "API Data"},
         // {path: "/mintegral-table", label: "Mintegral Table"},
-        {path: "/mintegral-date-spend", label: "Country wise Net Spend"},
+        {path: "/mintegral-date-spend", label: "Spend Overview"},
         // {path: "/date-country-spend", label: "Date Country Spend"}
         {path: "/game-country-spend", label: "Game wise Country Spend"}
     ];

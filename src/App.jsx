@@ -5,7 +5,7 @@ import FetchData from './components/FetchData';
 import DataDisplay from './components/DataDisplay';
 import MintegralDataTable from './components/MintegralDataTable';
 import DataComprehensed from './components/DataComprehensed'
-import MintegralTable from './components/mintegralTable';
+import MintegralTable from './components/MintegralTable';
 import MintegralDateSpendTable from './components/MintegralDataSpendTable';
 import CountryDataSpend from './components/CountryDataSpend';
 import GamewiseCountrySpend from './components/GamewiseCountrySpend';
