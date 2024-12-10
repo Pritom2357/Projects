@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { openDB } from 'idb';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const DataDisplayMintegral = () => {
   const [applovinData, setApplovinData] = useState([]);
@@ -12,6 +14,10 @@ const DataDisplayMintegral = () => {
   const [itemsPerPage] = useState(100);
   const [dataSource, setDataSource] = useState('applovin');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const navigate = useNavigate();
 
   const initDB = async () => {
     const db = await openDB('MyDatabase', 1, {
@@ -170,10 +176,12 @@ const DataDisplayMintegral = () => {
 
   return (
     <div className="container mx-auto p-4">
+      <Navbar/>
       <h1 className="text-2xl font-bold mb-4">Data from API</h1>
 
       {/* Data Source Switch */}
       <div className="mb-4">
+        
         <button
           onClick={() => setDataSource('applovin')}
           className={`bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-4 hover:bg-blue-600 ${
@@ -190,6 +198,24 @@ const DataDisplayMintegral = () => {
         >
           Show Mintegral Data
         </button>
+        {/* <button
+          onClick={() => navigate('/mintegral-table')}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 mx-4"
+        >
+          Mintegral Table
+        </button> */}
+        {/* <button
+          onClick={() => navigate('/date-country-spend')}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 mx-4"
+        >
+          Date Country Spend
+        </button> */}
+        {/* <button
+          onClick={() => navigate('/mintegral-date-spend')}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-2 mx-4"
+        >
+          Mintegral Date Spend Table
+        </button> */}
       </div>
 
       <button
