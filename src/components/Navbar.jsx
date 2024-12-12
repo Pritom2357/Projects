@@ -21,7 +21,7 @@ const Navbar = () => {
             path: "/comparator", label: "Comparator"
         },
         {
-            path: "/spend-overview", label: "Spend Overview"
+            path: "/spend-overview", label: "Profit Overview"
         }
     ];
 
