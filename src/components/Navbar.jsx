@@ -6,11 +6,23 @@ const Navbar = () => {
     const location = useLocation();
 
     const options = [
-        {path: "/", label: "API Data"},
+        {
+            path: "/", label: "API Data"
+        },
         // {path: "/mintegral-table", label: "Mintegral Table"},
-        {path: "/mintegral-date-spend", label: "Spend Overview"},
+        {
+            path: "/mintegral-date-spend", label: "Spend Overview"
+        },
         // {path: "/date-country-spend", label: "Date Country Spend"}
-        {path: "/game-country-spend", label: "Game wise Country Spend"}
+        {
+            path: "/game-country-spend", label: "Game wise Country Spend"
+        },
+        {
+            path: "/comparator", label: "Comparator"
+        },
+        {
+            path: "/spend-overview", label: "Spend Overview"
+        }
     ];
 
     const currentPath = location.pathname;
