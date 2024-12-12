@@ -25,56 +25,64 @@ const SpendOverview = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const today = new Date();
-        const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(today.getDate() - 7);
-
-        const [mintegralResponse, applovinResponse] = await Promise.all([
-          axios.get('https://backend-five-kohl-26.vercel.app/api/mintegral/spend'),
-          fetch('https://backend-five-kohl-26.vercel.app/api/applovin').then(res => res.json())
-        ]);
-
-        const processedApplovin = {};
-        applovinResponse.results
-          .filter(item => {
-            const itemDate = new Date(item.day);
-            return itemDate >= sevenDaysAgo && 
-                   itemDate <= today && 
-                   Object.keys(PACKAGE_MAPPING).includes(item.package_name);
-          })
-          .forEach(item => {
-            if (!processedApplovin[item.day]) {
-              processedApplovin[item.day] = {};
-            }
-            processedApplovin[item.day][item.package_name] = {
-              revenue: parseFloat(item.estimated_revenue) || 0,
-              spend: 0,
-              profit: parseFloat(item.estimated_revenue) || 0
-            };
-          });
-
-        mintegralResponse.data.data
-          .filter(item => Object.values(PACKAGE_MAPPING).includes(item.package_name))
-          .forEach(item => {
-            const applovinPackageName = Object.entries(PACKAGE_MAPPING)
-              .find(([_, mintegralId]) => mintegralId === item.package_name)?.[0];
-            
-            if (applovinPackageName && processedApplovin[item.date]?.[applovinPackageName]) {
-              const spend = parseFloat(item.spend) || 0;
-              processedApplovin[item.date][applovinPackageName].spend = spend;
-              processedApplovin[item.date][applovinPackageName].profit = 
-                processedApplovin[item.date][applovinPackageName].revenue - spend;
-            }
-          });
-
-        setDateWiseData(processedApplovin);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setLoading(false);
-      }
-    };
+        try {
+          const today = new Date();
+          const sevenDaysAgo = new Date(today);
+          sevenDaysAgo.setDate(today.getDate() - 7);
+      
+          const [mintegralResponse, applovinResponse] = await Promise.all([
+            axios.get('https://backend-five-kohl-26.vercel.app/api/mintegral/spend'),
+            fetch('https://backend-five-kohl-26.vercel.app/api/applovin').then(res => res.json())
+          ]);
+      
+          const processedApplovin = {};
+          applovinResponse.results
+            .filter(item => {
+              const itemDate = new Date(item.day);
+              return itemDate >= sevenDaysAgo && 
+                     itemDate <= today && 
+                     Object.keys(PACKAGE_MAPPING).includes(item.package_name);
+            })
+            .forEach(item => {
+              if (!processedApplovin[item.day]) {
+                processedApplovin[item.day] = {};
+              }
+              if (!processedApplovin[item.day][item.package_name]) {
+                processedApplovin[item.day][item.package_name] = {
+                  revenue: parseFloat(item.estimated_revenue) || 0,
+                  spend: 0,
+                  profit: 0
+                };
+              } else {
+                processedApplovin[item.day][item.package_name].revenue += parseFloat(item.estimated_revenue) || 0;
+              }
+              // Update initial profit
+              processedApplovin[item.day][item.package_name].profit = processedApplovin[item.day][item.package_name].revenue;
+            });
+      
+          // Sum all spend values for each game on each date
+          mintegralResponse.data.data
+            .filter(item => Object.values(PACKAGE_MAPPING).includes(item.package_name))
+            .forEach(item => {
+              const applovinPackageName = Object.entries(PACKAGE_MAPPING)
+                .find(([_, mintegralId]) => mintegralId === item.package_name)?.[0];
+              
+              if (applovinPackageName && processedApplovin[item.date]?.[applovinPackageName]) {
+                const spend = parseFloat(item.spend) || 0;
+                processedApplovin[item.date][applovinPackageName].spend += spend;
+                processedApplovin[item.date][applovinPackageName].profit = 
+                  processedApplovin[item.date][applovinPackageName].revenue - 
+                  processedApplovin[item.date][applovinPackageName].spend;
+              }
+            });
+      
+          setDateWiseData(processedApplovin);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          setLoading(false);
+        }
+      };
 
     fetchData();
   }, []);
