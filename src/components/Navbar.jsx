@@ -22,7 +22,10 @@ const Navbar = () => {
         },
         {
             path: "/spend-overview", label: "Profit Overview"
-        }
+        },
+        {
+            path: "/final-table", label: "Final Table"
+        },
     ];
 
     const currentPath = location.pathname;

@@ -11,6 +11,8 @@ import CountryDataSpend from './components/CountryDataSpend';
 import GamewiseCountrySpend from './components/GamewiseCountrySpend';
 import Comparator from './components/Comparator';
 import SpendOverview from './components/SpendOverview';
+import GameOfLife from './components/GameOfLife';
+import FinalTable from './components/FinalTable';
 
 
 function App() {
@@ -30,6 +32,8 @@ function App() {
           <Route path='/game-country-spend' element = {<GamewiseCountrySpend/>}/>
           <Route path='/comparator' element = {<Comparator/>}/>
           <Route path='/spend-overview' element = {<SpendOverview/>}/>
+          <Route path='/game-of-life' element = {<GameOfLife/>}/>
+          <Route path='/final-table' element = {<FinalTable/>}/>
         </Routes>
       </Router>
     </div>
